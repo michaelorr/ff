@@ -4,9 +4,7 @@ charm.land/bubbles/v2/cursor
 charm.land/bubbles/v2/help
 charm.land/bubbles/v2/internal/runeutil
 charm.land/bubbles/v2/key
-charm.land/bubbles/v2/spinner
 charm.land/bubbles/v2/textinput
-charm.land/bubbles/v2/timer
 charm.land/bubbles/v2/viewport
 # charm.land/bubbletea/v2 v2.0.6
 ## explicit; go 1.25.0
@@ -17,6 +15,11 @@ charm.land/lipgloss/v2
 # github.com/atotto/clipboard v0.1.4
 ## explicit
 github.com/atotto/clipboard
+# github.com/charlievieth/fastwalk v1.0.14
+## explicit; go 1.21
+github.com/charlievieth/fastwalk
+github.com/charlievieth/fastwalk/internal/dirent
+github.com/charlievieth/fastwalk/internal/fmtdirent
 # github.com/charmbracelet/colorprofile v0.4.3
 ## explicit; go 1.25.0
 github.com/charmbracelet/colorprofile

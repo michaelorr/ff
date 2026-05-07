@@ -9,11 +9,13 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/michaelorr/ff/colors"
+	"github.com/michaelorr/ff/internal/search"
 	"github.com/michaelorr/ff/internal/state"
 )
 
 type model struct {
 	input           textinput.Model
+	scanner         *search.Scanner
 	mode            string
 	help            help.Model
 	results         []string
@@ -44,6 +46,7 @@ const (
 func newModel() model {
 	m := model{
 		input:           newSearchInput(),
+		scanner:         *search.NewScanner(),
 		mode:            InsertMode,
 		help:            help.New(),
 		results:         []string{},
@@ -61,7 +64,8 @@ func newModel() model {
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	search.StartWalking()
+	return m.scanner.NextCmd()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
