@@ -18,7 +18,7 @@ func (m model) View() tea.View {
 			lipgloss.JoinHorizontal(
 				lipgloss.Left,
 				filterView(m),
-				resultsView(m),
+				matchesView(m),
 				previewView(m),
 			),
 		),
@@ -48,15 +48,15 @@ func filterView(m model) string {
 	return panel.Render("filters", filterWidth, m.height-searchHeight, foo{"foo"}, false)
 }
 
-func resultsView(m model) string {
-	return panel.Render("results", resultsWidth(m), m.height-searchHeight, foo{"bar"}, false)
+func matchesView(m model) string {
+	return panel.Render("matches", matchesWidth(m), m.height-searchHeight, &m.matchesViewport, false)
 }
 
 func previewView(m model) string {
 	return panel.Render("preview", previewWidth(m), m.height-searchHeight, foo{"baz"}, false)
 }
 
-func resultsWidth(m model) int {
+func matchesWidth(m model) int {
 	return ((m.width - filterWidth) / 2) + (m.width-filterWidth)%2
 }
 

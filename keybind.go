@@ -47,8 +47,10 @@ func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 
 	switch {
 	case key.Matches(msg, keys.Help):
-		m.help.ShowAll = !m.help.ShowAll
-		done = true
+		if m.mode == CommandMode {
+			m.help.ShowAll = !m.help.ShowAll
+			done = true
+		}
 	case key.Matches(msg, keys.Quit):
 		return *m, tea.Quit, true
 	case key.Matches(msg, keys.CommandMode):

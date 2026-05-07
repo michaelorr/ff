@@ -13,9 +13,8 @@ const (
 )
 
 type AppState struct {
-	Version int      `json:"version"`
-	Query   string   `json:"query"`
-	Results []string `json:"results"`
+	Version int    `json:"version"`
+	Query   string `json:"query"`
 }
 
 func Load() (AppState, bool) {
