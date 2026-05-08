@@ -1,7 +1,11 @@
 // Package colors
 package colors
 
-import "charm.land/lipgloss/v2"
+import (
+	"image/color"
+
+	"charm.land/lipgloss/v2"
+)
 
 var (
 	Bg0 = lipgloss.Color("#1d2021")
@@ -37,4 +41,6 @@ var (
 	Gray2 = lipgloss.Color("#a89984")
 
 	Accent = BgYellow
+
+	ChicletColors = []color.Color{Red, Green, Blue, Yellow, Purple, Orange, Aqua}
 )

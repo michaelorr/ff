@@ -3,23 +3,23 @@ package main
 import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/michaelorr/ff/panel"
+	"github.com/michaelorr/ff/components"
 )
 
 func (m model) View() tea.View {
-	var v tea.View
+	v := tea.View{}
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 
 	v.SetContent(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			searchView(m),
+			searchPanel(m),
 			lipgloss.JoinHorizontal(
 				lipgloss.Left,
-				filterView(m),
-				matchesView(m),
-				previewView(m),
+				filterPanel(m),
+				matchesPanel(m),
+				previewPanel(m),
 			),
 		),
 	)
@@ -27,39 +27,55 @@ func (m model) View() tea.View {
 	return v
 }
 
-type foo struct {
-	s string
-}
-
-func (f foo) View() string {
-	return f.s
-}
-
 var (
 	searchHeight = 3
 	filterWidth  = 20
 )
 
-func searchView(m model) string {
-	return panel.Render("search", m.width, searchHeight, m.input, m.mode == InsertMode)
+func (m *model) renderLayout() {
+	m.filtersViewport.SetHeight(m.height - searchHeight - 2)
+	m.filtersViewport.SetWidth(filterWidth - 2)
+	m.matchesViewport.SetHeight(m.height - searchHeight - 2)
+	m.matchesViewport.SetWidth(matchesWidth(*m) - 4)
+	m.previewViewport.SetHeight(m.height - searchHeight - 2)
+	m.previewViewport.SetWidth(previewWidth(*m) - 4)
+
+	m.filtersViewport.SetContent(components.RenderFilters(m.matchedFileIcons))
+	m.matchesViewport.SetContent(components.RenderMatches(m.matchedFileNames, m.matchesByFile, matchesWidth(*m)))
+	m.previewViewport.SetContent("baz")
 }
 
-func filterView(m model) string {
-	return panel.Render("filters", filterWidth, m.height-searchHeight, foo{"foo"}, false)
+func searchPanel(m model) string {
+	return components.RenderPanel("search", m.width, searchHeight, m.input, m.mode == InsertMode)
 }
 
-func matchesView(m model) string {
-	return panel.Render("matches", matchesWidth(m), m.height-searchHeight, &m.matchesViewport, false)
+func filterPanel(m model) string {
+	return components.RenderPanel("filters", filterWidth, m.height-searchHeight, &m.filtersViewport, false)
 }
 
-func previewView(m model) string {
-	return panel.Render("preview", previewWidth(m), m.height-searchHeight, foo{"baz"}, false)
+func matchesPanel(m model) string {
+	return components.RenderPanel("matches", matchesWidth(m), m.height-searchHeight, &m.matchesViewport, false)
+}
+
+func previewPanel(m model) string {
+	if !m.previewOpen {
+		return ""
+	}
+
+	return components.RenderPanel("preview", previewWidth(m), m.height-searchHeight, &m.previewViewport, false)
 }
 
 func matchesWidth(m model) int {
+	if !m.previewOpen {
+		return m.width - filterWidth
+	}
 	return ((m.width - filterWidth) / 2) + (m.width-filterWidth)%2
 }
 
 func previewWidth(m model) int {
+	if !m.previewOpen {
+		return 0
+	}
+
 	return (m.width - filterWidth) / 2
 }

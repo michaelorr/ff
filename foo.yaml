@@ -1,0 +1,6 @@
+name: demo
+description: "define a method with func ( r *Receiver ) syntax"
+version: 1.0
+tags:
+  - go
+  - syntax

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"slices"
 	"time"
 
 	"charm.land/bubbles/v2/help"
@@ -12,9 +11,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/michaelorr/ff/colors"
-	"github.com/michaelorr/ff/internal/search"
-	"github.com/michaelorr/ff/internal/state"
-	"github.com/michaelorr/ff/matches"
+	"github.com/michaelorr/ff/search"
+	"github.com/michaelorr/ff/state"
 )
 
 const debounceDuration = 250 * time.Millisecond
@@ -22,15 +20,19 @@ const debounceDuration = 250 * time.Millisecond
 type debounceMsg int
 
 type model struct {
-	input           textinput.Model
-	scanner         *search.Scanner
-	mode            string
-	help            help.Model
-	matchedFiles    []string
-	matchesByFile   map[string][]search.ContentMatch
-	matchesViewport viewport.Model
-	width, height   int
-	generation      int
+	input            textinput.Model
+	scanner          *search.Scanner
+	mode             string
+	previewOpen      bool
+	help             help.Model
+	matchedFileNames []string
+	matchedFileIcons map[search.FileIcon]int
+	matchesByFile    map[string][]search.ContentMatch
+	filtersViewport  viewport.Model
+	matchesViewport  viewport.Model
+	previewViewport  viewport.Model
+	width, height    int
+	generation       int
 }
 
 func newSearchInput() textinput.Model {
@@ -55,13 +57,17 @@ const (
 
 func newModel() model {
 	m := model{
-		input:           newSearchInput(),
-		scanner:         search.NewScanner(),
-		mode:            InsertMode,
-		help:            help.New(),
-		matchesByFile:   make(map[string][]search.ContentMatch),
-		matchesViewport: viewport.New(),
-		generation:      0,
+		input:            newSearchInput(),
+		scanner:          search.NewScanner(),
+		mode:             InsertMode,
+		previewOpen:      true,
+		help:             help.New(),
+		matchedFileIcons: make(map[search.FileIcon]int),
+		matchesByFile:    make(map[string][]search.ContentMatch),
+		filtersViewport:  viewport.New(),
+		matchesViewport:  viewport.New(),
+		previewViewport:  viewport.New(),
+		generation:       0,
 	}
 
 	if s, ok := state.Load(); ok {
@@ -75,7 +81,17 @@ func newModel() model {
 
 func (m model) Init() tea.Cmd {
 	search.StartWalking(".")
-	return m.scanner.NextCmd()
+	cmds := []tea.Cmd{m.scanner.NextCmd()}
+
+	query, gen := m.input.Value(), m.generation
+	if query != "" {
+		cmds = append(cmds, func() tea.Msg {
+			m.scanner.Search(query, gen)
+			return nil
+		})
+	}
+
+	return tea.Batch(cmds...)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -84,46 +100,40 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.matchesViewport.SetWidth(matchesWidth(m) - 4)
-		m.matchesViewport.SetHeight(m.height - searchHeight - 2)
+
+		m.renderLayout()
+
 		return m, nil
 
 	case tea.KeyPressMsg:
 		if m, cmd, done := handleKeyPressMsg(&m, msg); done {
+			_ = state.Save(state.AppState{Query: m.input.Value()})
 			return m, cmd
 		}
 
 	case search.ContentBatchMsg:
-		for _, match := range msg.Matches {
-			if match.Generation == m.generation {
-				if _, seen := m.matchesByFile[match.Path]; !seen {
-					m.matchedFiles = append(m.matchedFiles, match.Path)
-					slices.Sort(m.matchedFiles)
-					m.matchesByFile[match.Path] = nil
-				}
-				m.matchesByFile[match.Path] = append(m.matchesByFile[match.Path], match)
-			}
-		}
-		m.matchesViewport.SetContent(matches.RenderMatches(m.matchedFiles, m.matchesByFile))
+		m.addToMatches(msg.Matches)
+		m.renderLayout()
 		return m, m.scanner.NextCmd()
 
 	case debounceMsg:
 		// The value of `debounceMsg` corresponds to the `generation` from when the message was created.
 		// If this matches the current generation, then the input hasn't changed and we should do a search.
 		if int(msg) == m.generation {
-			m.matchedFiles = nil
-			m.matchesByFile = make(map[string][]search.ContentMatch)
+			m.resetMatches()
+			m.renderLayout()
 			query, gen := m.input.Value(), m.generation
-			return m, func() tea.Msg {
-				m.scanner.Search(query, gen)
-				return nil
+			if query != "" {
+				return m, func() tea.Msg {
+					m.scanner.Search(query, gen)
+					return nil
+				}
 			}
 		}
 		return m, nil
 	}
 
-	// None of the other more specific message types matched, try sending to the textinput component.
-
+	// None of the specific message types matched, send to the textinput component
 	prev := m.input.Value()
 	var inputCmd tea.Cmd
 	m.input, inputCmd = m.input.Update(msg)
@@ -135,5 +145,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tea.Batch(inputCmd, deferredDebounceCmd)
 	}
+	_ = state.Save(state.AppState{Query: m.input.Value()})
 	return m, inputCmd
 }
