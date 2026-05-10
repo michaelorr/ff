@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/michaelorr/ff/colors"
+	"github.com/michaelorr/ff/style"
 )
 
 type Viewable interface {
@@ -12,9 +12,9 @@ type Viewable interface {
 }
 
 var (
-	titleStyle         = lipgloss.NewStyle().Foreground(colors.Accent).Bold(true).Background(colors.Bg0)
-	blurredBorderColor = colors.Gray0
-	focusedBorderColor = colors.Accent
+	titleStyle         = lipgloss.NewStyle().Foreground(style.Accent).Bold(true).Background(style.Bg0)
+	blurredBorderColor = style.Gray0
+	focusedBorderColor = style.Accent
 )
 
 // RenderPanel contains rendering helpers for panel components
@@ -28,7 +28,7 @@ func RenderPanel(title string, width, height int, body Viewable, focused bool) s
 		borderColor = focusedBorderColor
 	}
 
-	topBorderStyle := lipgloss.NewStyle().Foreground(borderColor).Background(colors.Bg0)
+	topBorderStyle := lipgloss.NewStyle().Foreground(borderColor).Background(style.Bg0)
 	title = titleStyle.Render(" " + title + " ")
 	border := lipgloss.RoundedBorder()
 	innerW := max(width-2, 0)
@@ -42,8 +42,8 @@ func RenderPanel(title string, width, height int, body Viewable, focused bool) s
 
 	box := lipgloss.NewStyle().
 		BorderForeground(borderColor).
-		BorderBackground(colors.Bg0).
-		Background(colors.Bg0).
+		BorderBackground(style.Bg0).
+		Background(style.Bg0).
 		BorderStyle(border).
 		BorderTop(false).
 		BorderLeft(true).

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/michaelorr/ff/colors"
 	"github.com/michaelorr/ff/search"
+	"github.com/michaelorr/ff/style"
 )
 
 func RenderFilters(icons map[search.FileIcon]int) string {
@@ -19,9 +19,9 @@ func RenderFilters(icons map[search.FileIcon]int) string {
 		return strings.Compare(a.Icon, b.Icon)
 	})
 
-	defaultStyle := lipgloss.NewStyle().Foreground(colors.Fg0).Background(colors.Bg0)
+	defaultStyle := lipgloss.NewStyle().Foreground(style.Fg0).Background(style.Bg0)
 	for _, icon := range types {
-		iconStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(icon.Color)).Background(colors.Bg0)
+		iconStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(icon.Color)).Background(style.Bg0)
 
 		fmt.Fprintf(
 			&b, "%s%s%s",

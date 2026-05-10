@@ -9,8 +9,6 @@ type keyMap struct {
 	Help          key.Binding
 	Quit          key.Binding
 	Reset         key.Binding
-	CommandMode   key.Binding
-	InsertMode    key.Binding
 	TogglePreview key.Binding
 }
 
@@ -42,14 +40,6 @@ var keys = keyMap{
 		key.WithKeys("ctrl+p"),
 		key.WithHelp("ctrl+p", "toggle preview"),
 	),
-	CommandMode: key.NewBinding(
-		key.WithKeys("esc"),
-		key.WithHelp("esc", "command mode"),
-	),
-	InsertMode: key.NewBinding(
-		key.WithKeys("i"),
-		key.WithHelp("i", "insert mode"),
-	),
 }
 
 func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
@@ -57,10 +47,8 @@ func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 
 	switch {
 	case key.Matches(msg, keys.Help):
-		if m.mode == CommandMode {
-			m.help.ShowAll = !m.help.ShowAll
-			done = true
-		}
+		m.help.ShowAll = !m.help.ShowAll
+		done = true
 	case key.Matches(msg, keys.Quit):
 		return *m, tea.Quit, true
 	case key.Matches(msg, keys.Reset):
@@ -69,22 +57,10 @@ func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 		m.resetMatches()
 		m.renderLayout()
 		return *m, nil, true
-	case key.Matches(msg, keys.CommandMode):
-		if m.mode == InsertMode {
-			m.input.Blur()
-			m.mode = CommandMode
-			done = true
-		}
 	case key.Matches(msg, keys.TogglePreview):
 		m.previewOpen = !m.previewOpen
 		m.renderLayout()
 		done = true
-	case key.Matches(msg, keys.InsertMode):
-		if m.mode == CommandMode {
-			m.input.Focus()
-			m.mode = InsertMode
-			done = true
-		}
 	}
 
 	return *m, nil, done

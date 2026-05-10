@@ -7,27 +7,27 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/michaelorr/ff/colors"
 	"github.com/michaelorr/ff/search"
+	"github.com/michaelorr/ff/style"
 )
 
 var (
 	defaultStyle = lipgloss.NewStyle().
-			Foreground(colors.Fg0).
-			Background(colors.Bg0)
+			Foreground(style.Fg0).
+			Background(style.Bg0)
 
 	fileLineStyle = defaultStyle.
-			Background(colors.Bg1)
+			Background(style.Bg1)
 
 	fileDirStyle = fileLineStyle.
-			Foreground(colors.Gray0)
+			Foreground(style.Gray0)
 
 	filenameStyle = fileLineStyle.
 			Bold(true).
 			Underline(true)
 
 	lineNumStyle = defaultStyle.
-			Foreground(colors.Gray0)
+			Foreground(style.Gray0)
 )
 
 func RenderMatches(files []string, byFile map[string][]search.ContentMatch, width int) string {
@@ -45,7 +45,8 @@ func RenderMatches(files []string, byFile map[string][]search.ContentMatch, widt
 
 		for _, m := range byFile[path] {
 			line := lineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum)) +
-				SyntaxHighlight(m.Line, path)
+				// SyntaxHighlight(m.Line, path)
+				m.Line
 			filler := defaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
 			fmt.Fprint(&b, line, filler, "\n")
 		}

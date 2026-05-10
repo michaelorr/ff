@@ -46,7 +46,7 @@ func (m *model) renderLayout() {
 }
 
 func searchPanel(m model) string {
-	return components.RenderPanel("search", m.width, searchHeight, m.input, m.mode == InsertMode)
+	return components.RenderPanel("search", m.width, searchHeight, m.input, true)
 }
 
 func filterPanel(m model) string {

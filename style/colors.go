@@ -1,5 +1,5 @@
-// Package colors
-package colors
+// Package style
+package style
 
 import (
 	"image/color"
