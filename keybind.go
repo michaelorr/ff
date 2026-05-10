@@ -19,22 +19,28 @@ var keys = keyMap{
 }
 
 func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
-	var done bool
-
 	switch {
 	case key.Matches(msg, keys.Quit):
 		return *m, tea.Quit, true
 	case key.Matches(msg, keys.Reset):
-		m.generation++
-		m.input.Reset()
-		m.resetMatches()
-		m.renderLayout()
-		return *m, state.SaveCmd(m.State()), true
+		return handleResetKey(m)
 	case key.Matches(msg, keys.TogglePreview):
-		m.previewOpen = !m.previewOpen
-		m.renderLayout()
-		done = true
+		return handleTogglePreviewKey(m)
+	default:
+		return *m, nil, false
 	}
+}
 
-	return *m, nil, done
+func handleResetKey(m *model) (model, tea.Cmd, bool) {
+	m.generation++
+	m.input.Reset()
+	m.resetMatches()
+	m.renderLayout()
+	return *m, state.SaveCmd(m.State()), true
+}
+
+func handleTogglePreviewKey(m *model) (model, tea.Cmd, bool) {
+	m.previewOpen = !m.previewOpen
+	m.renderLayout()
+	return *m, nil, true
 }
