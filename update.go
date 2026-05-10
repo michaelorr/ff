@@ -24,20 +24,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return handleContentBatchMsg(m, msg)
 	}
 
-	// None of the specific message types matched, send to the textinput component
-	prev := m.input.Value()
-	var inputCmd tea.Cmd
-	m.input, inputCmd = m.input.Update(msg)
-	if m.input.Value() != prev {
-		m.generation++
-		deferredDebounceCmd := tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
-			return debounceMsg(m.generation)
-		})
-
-		return m, tea.Batch(inputCmd, deferredDebounceCmd)
-	}
-	state.Save(state.AppState{Query: m.input.Value()})
-	return m, inputCmd
+	return sendMsgToInput(m, msg)
 }
 
 func handleWindowSizeMsg(m model, msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
@@ -51,6 +38,7 @@ func handleWindowSizeMsg(m model, msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 func handleDebounceMsg(m model, msg debounceMsg) (tea.Model, tea.Cmd) {
 	// The value of `debounceMsg` corresponds to the `generation` from when the message was created.
 	// If this matches the current generation, then the input hasn't changed and we should do a search.
+	// Otherwise, drop the message because it's outdated.
 	if int(msg) == m.generation {
 		m.resetMatches()
 		m.renderLayout()
@@ -65,4 +53,22 @@ func handleContentBatchMsg(m model, msg search.ContentBatchMsg) (tea.Model, tea.
 	m.addToMatches(msg.Matches)
 	m.renderLayout()
 	return m, m.scanner.NextCmd()
+}
+
+func sendMsgToInput(m model, msg tea.Msg) (model, tea.Cmd) {
+	// Compare the value before and after the update.
+	// If it changed then save the state and debounce a search.
+	prev := m.input.Value()
+	var cmd tea.Cmd
+	m.input, cmd = m.input.Update(msg)
+	cmds := []tea.Cmd{cmd}
+	if prev != m.input.Value() {
+		state.Save(m.State())
+		m.generation++
+		debounceCmd := tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
+			return debounceMsg(m.generation)
+		})
+		cmds = append(cmds, debounceCmd)
+	}
+	return m, tea.Batch(cmds...)
 }
