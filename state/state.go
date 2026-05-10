@@ -29,11 +29,9 @@ func Load() (AppState, bool) {
 	return s, true
 }
 
-func Save(s AppState) error {
+func Save(s AppState) {
+	// TODO: handle errors
 	s.Version = currentVersion
-	data, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(".", filename), data, 0o644)
+	data, _ := json.MarshalIndent(s, "", "  ")
+	_ = os.WriteFile(filepath.Join(".", filename), data, 0o644)
 }

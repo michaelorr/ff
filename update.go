@@ -12,39 +12,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-
-		m.renderLayout()
-
-		return m, nil
-
+		return handleWindowSizeMsg(m, msg)
 	case tea.KeyPressMsg:
-		if m, cmd, done := handleKeyPressMsg(&m, msg); done {
-			_ = state.Save(state.AppState{Query: m.input.Value()})
+		m, cmd, done := handleKeyPressMsg(&m, msg)
+		if done {
 			return m, cmd
 		}
-
-	case search.ContentBatchMsg:
-		m.addToMatches(msg.Matches)
-		m.renderLayout()
-		return m, m.scanner.NextCmd()
-
 	case debounceMsg:
-		// The value of `debounceMsg` corresponds to the `generation` from when the message was created.
-		// If this matches the current generation, then the input hasn't changed and we should do a search.
-		if int(msg) == m.generation {
-			m.resetMatches()
-			m.renderLayout()
-			query, gen := m.input.Value(), m.generation
-			if query != "" {
-				return m, func() tea.Msg {
-					m.scanner.Search(query, gen)
-					return nil
-				}
-			}
-		}
-		return m, nil
+		return handleDebounceMsg(m, msg)
+	case search.ContentBatchMsg:
+		return handleContentBatchMsg(m, msg)
 	}
 
 	// None of the specific message types matched, send to the textinput component
@@ -59,6 +36,33 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		return m, tea.Batch(inputCmd, deferredDebounceCmd)
 	}
-	_ = state.Save(state.AppState{Query: m.input.Value()})
+	state.Save(state.AppState{Query: m.input.Value()})
 	return m, inputCmd
+}
+
+func handleWindowSizeMsg(m model, msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
+	m.width = msg.Width
+	m.height = msg.Height
+	m.renderLayout()
+
+	return m, nil
+}
+
+func handleDebounceMsg(m model, msg debounceMsg) (tea.Model, tea.Cmd) {
+	// The value of `debounceMsg` corresponds to the `generation` from when the message was created.
+	// If this matches the current generation, then the input hasn't changed and we should do a search.
+	if int(msg) == m.generation {
+		m.resetMatches()
+		m.renderLayout()
+		if m.input.Value() != "" {
+			return m, m.searchCmd()
+		}
+	}
+	return m, nil
+}
+
+func handleContentBatchMsg(m model, msg search.ContentBatchMsg) (tea.Model, tea.Cmd) {
+	m.addToMatches(msg.Matches)
+	m.renderLayout()
+	return m, m.scanner.NextCmd()
 }

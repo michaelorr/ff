@@ -59,14 +59,22 @@ func (m model) Init() tea.Cmd {
 
 	cmds := []tea.Cmd{m.scanner.NextCmd()}
 
-	// If query is non-empty after loading state, immediately do a search
-	query, gen := m.input.Value(), m.generation
-	if query != "" {
-		cmds = append(cmds, func() tea.Msg {
-			m.scanner.Search(query, gen)
-			return nil
-		})
+	if m.input.Value() != "" {
+		cmds = append(cmds, m.searchCmd())
 	}
 
 	return tea.Batch(cmds...)
+}
+
+func (m model) State() state.AppState {
+	return state.AppState{
+		Query: m.input.Value(),
+	}
+}
+
+func (m model) searchCmd() tea.Cmd {
+	return func() tea.Msg {
+		m.scanner.Search(m.input.Value(), m.generation)
+		return nil
+	}
 }

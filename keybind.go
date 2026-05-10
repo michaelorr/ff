@@ -3,6 +3,7 @@ package main
 import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"github.com/michaelorr/ff/state"
 )
 
 type keyMap struct {
@@ -56,6 +57,7 @@ func handleKeyPressMsg(m *model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 		m.generation++
 		m.resetMatches()
 		m.renderLayout()
+		state.Save(m.State())
 		return *m, nil, true
 	case key.Matches(msg, keys.TogglePreview):
 		m.previewOpen = !m.previewOpen
