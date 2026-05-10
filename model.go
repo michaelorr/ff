@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/viewport"
 
 	"charm.land/bubbles/v2/textinput"
@@ -22,7 +21,6 @@ type model struct {
 	input            textinput.Model
 	scanner          *search.Scanner
 	previewOpen      bool
-	help             help.Model
 	matchedFileNames []string
 	matchedFileIcons map[search.FileIcon]int
 	matchesByFile    map[string][]search.ContentMatch
@@ -38,7 +36,6 @@ func newModel() model {
 		input:            components.NewSearchInput(),
 		scanner:          search.NewScanner(),
 		previewOpen:      true,
-		help:             help.New(),
 		matchedFileIcons: make(map[search.FileIcon]int),
 		matchesByFile:    make(map[string][]search.ContentMatch),
 		filtersViewport:  viewport.New(),

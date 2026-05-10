@@ -63,12 +63,11 @@ func sendMsgToInput(m model, msg tea.Msg) (model, tea.Cmd) {
 	m.input, cmd = m.input.Update(msg)
 	cmds := []tea.Cmd{cmd}
 	if prev != m.input.Value() {
-		state.Save(m.State())
 		m.generation++
 		debounceCmd := tea.Tick(debounceDuration, func(_ time.Time) tea.Msg {
 			return debounceMsg(m.generation)
 		})
-		cmds = append(cmds, debounceCmd)
+		cmds = append(cmds, state.SaveCmd(m.State()), debounceCmd)
 	}
 	return m, tea.Batch(cmds...)
 }

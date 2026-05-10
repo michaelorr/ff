@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 const (
@@ -29,9 +31,13 @@ func Load() (AppState, bool) {
 	return s, true
 }
 
-func Save(s AppState) {
-	// TODO: handle errors
-	s.Version = currentVersion
-	data, _ := json.MarshalIndent(s, "", "  ")
-	_ = os.WriteFile(filepath.Join(".", filename), data, 0o644)
+func SaveCmd(s AppState) tea.Cmd {
+	return func() tea.Msg {
+		// TODO: handle errors
+		s.Version = currentVersion
+		data, _ := json.MarshalIndent(s, "", "  ")
+		_ = os.WriteFile(filepath.Join(".", filename), data, 0o644)
+
+		return nil
+	}
 }
