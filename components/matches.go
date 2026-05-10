@@ -12,19 +12,23 @@ import (
 )
 
 var (
+	highlightCache = map[string]map[int]string{}
+
 	defaultStyle = lipgloss.NewStyle().
 			Foreground(style.Fg0).
 			Background(style.Bg0)
 
 	fileLineStyle = defaultStyle.
-			Background(style.Bg1)
+			Underline(true).
+			UnderlineSpaces(true).
+			UnderlineColor(style.Gray0).
+			UnderlineStyle(lipgloss.UnderlineDashed)
 
 	fileDirStyle = fileLineStyle.
 			Foreground(style.Gray0)
 
 	filenameStyle = fileLineStyle.
-			Bold(true).
-			Underline(true)
+			Bold(true)
 
 	lineNumStyle = defaultStyle.
 			Foreground(style.Gray0)
@@ -45,12 +49,24 @@ func RenderMatches(files []string, byFile map[string][]search.ContentMatch, widt
 
 		for _, m := range byFile[path] {
 			line := lineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum)) +
-				// SyntaxHighlight(m.Line, path)
-				m.Line
+				cachedHighlight(m.Line, path, m.LineNum)
 			filler := defaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
 			fmt.Fprint(&b, line, filler, "\n")
 		}
 	}
 
 	return b.String()
+}
+
+func cachedHighlight(line, path string, lineNum int) string {
+	if lines, ok := highlightCache[path]; ok {
+		if cached, ok := lines[lineNum]; ok {
+			return cached
+		}
+	} else {
+		highlightCache[path] = map[int]string{}
+	}
+	result := syntaxHighlight(line, path)
+	highlightCache[path][lineNum] = result
+	return result
 }

@@ -389,6 +389,9 @@ func (s Style) Render(strs ...string) string {
 
 	if underlineSpaces {
 		teSpace = teSpace.Underline(true)
+		if s.ul != UnderlineNone {
+			teSpace = teSpace.UnderlineStyle(s.ul)
+		}
 	}
 	if strikethroughSpaces {
 		teSpace = teSpace.Strikethrough(true)
