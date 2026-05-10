@@ -15,3 +15,9 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+// Keep refactoring:
+// - view.go
+// - matches.go
+// - style/
+// - components/

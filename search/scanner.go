@@ -14,9 +14,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Scanner manages the state of an ongoing search. It:
+// Scanner manages the state of an ongoing search.
 // - NewScanner spawns a goroutine to receive file paths from `walker`
-// - NextCmd is invoked by `model.Init` and subsequently by `model.Update` to retrieve batches of search matches
+// - NextCmd is invoked by `model.Init` and subsequently by `model.Update` to retrieve batches of matches
 type Scanner struct {
 	mu         sync.Mutex
 	paths      []string
@@ -56,16 +56,17 @@ func NewScanner() *Scanner {
 // Search initiates a new search with a given query and generation number.
 // Cancel any ongoing work and start new goroutines for each file path in `s.paths` to scan for the query.
 func (s *Scanner) Search(query string, generation int) {
+	ctx, cancel := context.WithCancel(context.Background())
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.SetLimit(runtime.NumCPU())
+
 	s.mu.Lock()
 	if s.cancel != nil {
 		s.cancel()
 	}
 	s.query = query
 	s.generation = generation
-	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
-	eg, egCtx := errgroup.WithContext(ctx)
-	eg.SetLimit(runtime.NumCPU())
 	s.eg = eg
 	s.egCtx = egCtx
 	paths := make([]string, len(s.paths))
@@ -124,8 +125,8 @@ func scanFile(ctx context.Context, path, query string, generation int, resultCh 
 
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, maxLineLen), maxLineLen)
-	lineNum := 0
 
+	lineNum := 0
 	for scanner.Scan() {
 		if ctx.Err() != nil {
 			return ctx.Err()
