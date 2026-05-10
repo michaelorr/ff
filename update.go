@@ -30,8 +30,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func handleWindowSizeMsg(m model, msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.width = msg.Width
 	m.height = msg.Height
-	m.renderLayout()
-
+	m.updateDimensions()
 	return m, nil
 }
 
@@ -41,9 +40,12 @@ func handleDebounceMsg(m model, msg debounceMsg) (tea.Model, tea.Cmd) {
 	// Otherwise, drop the message because it's outdated.
 	if int(msg) == m.generation {
 		m.resetMatches()
-		m.renderLayout()
 		if m.input.Value() != "" {
 			return m, m.searchCmd()
+		} else {
+			// If we do a search (above), content will refresh on the first batch message of results.
+			// If we don't do a search, we need to clear the old results ourselves.
+			m.updateDimensions()
 		}
 	}
 	return m, nil
@@ -51,7 +53,7 @@ func handleDebounceMsg(m model, msg debounceMsg) (tea.Model, tea.Cmd) {
 
 func handleContentBatchMsg(m model, msg search.ContentBatchMsg) (tea.Model, tea.Cmd) {
 	m.addToMatches(msg.Matches)
-	m.renderLayout()
+	m.updateDimensions()
 	return m, m.scanner.NextCmd()
 }
 

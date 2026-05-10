@@ -9,12 +9,12 @@ import (
 func (m *model) addToMatches(matches []search.ContentMatch) {
 	for _, match := range matches {
 		if match.Generation == m.generation {
-			if _, seen := m.matchesByFile[match.Path]; !seen {
+			if _, seenFile := m.matchesByFile[match.Path]; !seenFile {
 				m.matchedFileNames = append(m.matchedFileNames, match.Path)
-				slices.Sort(m.matchedFileNames)
 				m.matchesByFile[match.Path] = nil
-
 				m.matchedFileIcons[match.Icon]++
+
+				slices.Sort(m.matchedFileNames)
 			}
 
 			m.matchesByFile[match.Path] = append(m.matchesByFile[match.Path], match)

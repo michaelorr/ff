@@ -6,20 +6,24 @@ import (
 	"github.com/michaelorr/ff/components"
 )
 
+var (
+	borders           = 2
+	bordersAndPadding = borders + 2
+)
+
 func (m model) View() tea.View {
 	v := tea.View{}
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 
+	m.filtersViewport.SetContent(components.Filters(m.matchedFileIcons, m.componentSize("filters").Width))
+	m.matchesViewport.SetContent(components.Matches(m.matchedFileNames, m.matchesByFile, m.componentSize("matches").Width))
+	m.previewViewport.SetContent(components.Preview(m.selectedFile, m.selectedMatch, m.componentSize("preview").Width))
+
 	v.SetContent(
 		lipgloss.JoinVertical(
-			lipgloss.Left,
-			searchPanel(m),
-			lipgloss.JoinHorizontal(
-				lipgloss.Left,
-				filterPanel(m),
-				matchesPanel(m),
-				previewPanel(m),
+			lipgloss.Left, m.searchPanel(), lipgloss.JoinHorizontal(
+				lipgloss.Top, m.filterPanel(), m.matchesPanel(), m.previewPanel(),
 			),
 		),
 	)
@@ -27,55 +31,67 @@ func (m model) View() tea.View {
 	return v
 }
 
-var (
-	searchHeight = 3
-	filterWidth  = 20
-)
+func (m *model) updateDimensions() {
+	m.filtersViewport.SetHeight(m.componentSize("filters").Height - borders)
+	m.filtersViewport.SetWidth(m.componentSize("filters").Width - bordersAndPadding)
 
-func (m *model) renderLayout() {
-	m.filtersViewport.SetHeight(m.height - searchHeight - 2)
-	m.filtersViewport.SetWidth(filterWidth - 2)
-	m.matchesViewport.SetHeight(m.height - searchHeight - 2)
-	m.matchesViewport.SetWidth(matchesWidth(*m) - 4)
-	m.previewViewport.SetHeight(m.height - searchHeight - 2)
-	m.previewViewport.SetWidth(previewWidth(*m) - 4)
+	m.matchesViewport.SetHeight(m.componentSize("matches").Height - borders)
+	m.matchesViewport.SetWidth(m.componentSize("matches").Width - bordersAndPadding)
 
-	m.filtersViewport.SetContent(components.RenderFilters(m.matchedFileIcons))
-	m.matchesViewport.SetContent(components.RenderMatches(m.matchedFileNames, m.matchesByFile, matchesWidth(*m)))
-	m.previewViewport.SetContent("baz")
+	m.previewViewport.SetHeight(m.componentSize("preview").Height - borders)
+	m.previewViewport.SetWidth(m.componentSize("preview").Width - bordersAndPadding)
 }
 
-func searchPanel(m model) string {
-	return components.RenderPanel("search", m.width, searchHeight, m.input, true)
+func (m model) searchPanel() string {
+	return components.Panel("search", m.componentSize("search"), m.input, true)
 }
 
-func filterPanel(m model) string {
-	return components.RenderPanel("filters", filterWidth, m.height-searchHeight, &m.filtersViewport, false)
+func (m model) filterPanel() string {
+	return components.Panel("filters", m.componentSize("filters"), &m.filtersViewport, false)
 }
 
-func matchesPanel(m model) string {
-	return components.RenderPanel("matches", matchesWidth(m), m.height-searchHeight, &m.matchesViewport, false)
+func (m model) matchesPanel() string {
+	return components.Panel("matches", m.componentSize("matches"), &m.matchesViewport, false)
 }
 
-func previewPanel(m model) string {
+func (m model) previewPanel() string {
 	if !m.previewOpen {
 		return ""
 	}
 
-	return components.RenderPanel("preview", previewWidth(m), m.height-searchHeight, &m.previewViewport, false)
+	return components.Panel("preview", m.componentSize("preview"), &m.previewViewport, false)
 }
 
-func matchesWidth(m model) int {
-	if !m.previewOpen {
-		return m.width - filterWidth
-	}
-	return ((m.width - filterWidth) / 2) + (m.width-filterWidth)%2
-}
+func (m model) componentSize(component string) components.Size {
+	searchHeight := 3
+	filterWidth := 20
+	bodyComponentHeight := m.height - searchHeight
 
-func previewWidth(m model) int {
-	if !m.previewOpen {
+	previewWidth := func() int {
+		if m.previewOpen {
+			return (m.width - filterWidth) / 2
+		}
 		return 0
 	}
 
-	return (m.width - filterWidth) / 2
+	components := map[string]components.Size{
+		"search": {
+			Width:  m.width,
+			Height: searchHeight,
+		},
+		"filters": {
+			Width:  filterWidth,
+			Height: bodyComponentHeight,
+		},
+		"matches": {
+			Width:  m.width - filterWidth - previewWidth(),
+			Height: bodyComponentHeight,
+		},
+		"preview": {
+			Width:  previewWidth(),
+			Height: bodyComponentHeight,
+		},
+	}
+
+	return components[component]
 }

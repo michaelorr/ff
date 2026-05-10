@@ -14,11 +14,7 @@ import (
 var (
 	highlightCache = map[string]map[int]string{}
 
-	defaultStyle = lipgloss.NewStyle().
-			Foreground(style.Fg0).
-			Background(style.Bg0)
-
-	fileLineStyle = defaultStyle.
+	fileLineStyle = style.DefaultStyle.
 			Underline(true).
 			UnderlineSpaces(true).
 			UnderlineColor(style.Gray0).
@@ -30,11 +26,11 @@ var (
 	filenameStyle = fileLineStyle.
 			Bold(true)
 
-	lineNumStyle = defaultStyle.
+	lineNumStyle = style.DefaultStyle.
 			Foreground(style.Gray0)
 )
 
-func RenderMatches(files []string, byFile map[string][]search.ContentMatch, width int) string {
+func Matches(files []string, byFile map[string][]search.ContentMatch, width int) string {
 	var b strings.Builder
 
 	for _, path := range files {
@@ -50,7 +46,7 @@ func RenderMatches(files []string, byFile map[string][]search.ContentMatch, widt
 		for _, m := range byFile[path] {
 			line := lineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum)) +
 				cachedHighlight(m.Line, path, m.LineNum)
-			filler := defaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
+			filler := style.DefaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
 			fmt.Fprint(&b, line, filler, "\n")
 		}
 	}

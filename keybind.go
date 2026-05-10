@@ -35,12 +35,12 @@ func handleResetKey(m *model) (model, tea.Cmd, bool) {
 	m.generation++
 	m.input.Reset()
 	m.resetMatches()
-	m.renderLayout()
+	m.updateDimensions()
 	return *m, state.SaveCmd(m.State()), true
 }
 
 func handleTogglePreviewKey(m *model) (model, tea.Cmd, bool) {
 	m.previewOpen = !m.previewOpen
-	m.renderLayout()
+	m.updateDimensions()
 	return *m, nil, true
 }

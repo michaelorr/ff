@@ -17,7 +17,4 @@ func main() {
 }
 
 // Keep refactoring:
-// - view.go
-// - matches.go
-// - style/
 // - components/

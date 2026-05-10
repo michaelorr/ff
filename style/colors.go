@@ -7,6 +7,8 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+var DefaultStyle = lipgloss.NewStyle().Foreground(Fg0).Background(Bg0)
+
 var (
 	Bg0 = lipgloss.Color("#1d2021")
 	Bg1 = lipgloss.Color("#282828")

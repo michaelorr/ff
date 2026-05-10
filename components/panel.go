@@ -12,26 +12,30 @@ type Viewable interface {
 }
 
 var (
-	titleStyle         = lipgloss.NewStyle().Foreground(style.Accent).Bold(true).Background(style.Bg0)
+	titleStyle         = style.DefaultStyle.Foreground(style.Accent).Bold(true)
 	blurredBorderColor = style.Gray0
 	focusedBorderColor = style.Accent
 )
 
-// RenderPanel contains rendering helpers for panel components
+type Size struct {
+	Width, Height int
+}
+
+// Panel contains rendering helpers for panel components
 //
 //	╭─ title ───────────╮
 //	│  body...          │
 //	╰───────────────────╯
-func RenderPanel(title string, width, height int, body Viewable, focused bool) string {
+func Panel(title string, s Size, body Viewable, focused bool) string {
 	borderColor := blurredBorderColor
 	if focused {
 		borderColor = focusedBorderColor
 	}
 
-	topBorderStyle := lipgloss.NewStyle().Foreground(borderColor).Background(style.Bg0)
+	topBorderStyle := style.DefaultStyle.Foreground(borderColor)
 	title = titleStyle.Render(" " + title + " ")
 	border := lipgloss.RoundedBorder()
-	innerW := max(width-2, 0)
+	innerW := max(s.Width-2, 0)
 	titleW := lipgloss.Width(title)
 	remaining := max(innerW-titleW-1, 0)
 
@@ -40,17 +44,16 @@ func RenderPanel(title string, width, height int, body Viewable, focused bool) s
 		title +
 		topBorderStyle.Render(strings.Repeat(border.Top, remaining)+border.TopRight)
 
-	box := lipgloss.NewStyle().
+	box := style.DefaultStyle.
 		BorderForeground(borderColor).
 		BorderBackground(style.Bg0).
-		Background(style.Bg0).
 		BorderStyle(border).
 		BorderTop(false).
 		BorderLeft(true).
 		BorderRight(true).
 		BorderBottom(true).
-		Width(max(width, 2)).
-		Height(height-1).
+		Width(max(s.Width, 2)).
+		Height(s.Height-1).
 		Padding(0, 1).
 		Render(body.View())
 

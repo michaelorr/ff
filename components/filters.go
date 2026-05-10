@@ -11,7 +11,7 @@ import (
 	"github.com/michaelorr/ff/style"
 )
 
-func RenderFilters(icons map[search.FileIcon]int) string {
+func Filters(icons map[search.FileIcon]int, width int) string {
 	var b strings.Builder
 	b.WriteByte('\n')
 	types := slices.Collect(maps.Keys(icons))
@@ -19,16 +19,12 @@ func RenderFilters(icons map[search.FileIcon]int) string {
 		return strings.Compare(a.Icon, b.Icon)
 	})
 
-	defaultStyle := lipgloss.NewStyle().Foreground(style.Fg0).Background(style.Bg0)
 	for _, icon := range types {
-		iconStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(icon.Color)).Background(style.Bg0)
+		iconStyle := style.DefaultStyle.Foreground(lipgloss.Color(icon.Color))
 
-		fmt.Fprintf(
-			&b, "%s%s%s",
-			iconStyle.Render(icon.Icon),
-			defaultStyle.Render(fmt.Sprintf(" %d", icons[icon])),
-			"\n",
-		)
+		line := iconStyle.Render(icon.Icon) + style.DefaultStyle.Render(fmt.Sprintf(" %d", icons[icon]))
+		line = line + style.DefaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))), "\n")
+		b.WriteString(line)
 	}
 	return b.String()
 }

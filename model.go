@@ -24,6 +24,8 @@ type model struct {
 	matchedFileNames []string
 	matchedFileIcons map[search.FileIcon]int
 	matchesByFile    map[string][]search.ContentMatch
+	selectedFile     string
+	selectedMatch    *search.ContentMatch
 	filtersViewport  viewport.Model
 	matchesViewport  viewport.Model
 	previewViewport  viewport.Model
@@ -38,6 +40,8 @@ func newModel() model {
 		previewOpen:      true,
 		matchedFileIcons: make(map[search.FileIcon]int),
 		matchesByFile:    make(map[string][]search.ContentMatch),
+		selectedFile:     "",
+		selectedMatch:    nil,
 		filtersViewport:  viewport.New(),
 		matchesViewport:  viewport.New(),
 		previewViewport:  viewport.New(),
