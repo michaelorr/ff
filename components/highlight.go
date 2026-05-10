@@ -13,7 +13,7 @@ import (
 
 var (
 	gruvbox = styles.Get("gruvbox")
-	base    = style.DefaultStyle
+	base    = style.Default
 )
 
 // syntaxHighlight returns line with ANSI syntax-highlighting applied based on

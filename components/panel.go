@@ -12,9 +12,11 @@ type Viewable interface {
 }
 
 var (
-	titleStyle         = style.DefaultStyle.Foreground(style.Accent).Bold(true)
+	titleStyle         = style.Default.Foreground(style.Accent).Bold(true)
 	blurredBorderColor = style.Gray0
 	focusedBorderColor = style.Accent
+
+	border = lipgloss.RoundedBorder()
 )
 
 type Size struct {
@@ -28,13 +30,13 @@ type Size struct {
 //	╰───────────────────╯
 func Panel(title string, s Size, body Viewable, focused bool) string {
 	borderColor := blurredBorderColor
+	topBorderStyle := style.Default.Foreground(blurredBorderColor)
 	if focused {
 		borderColor = focusedBorderColor
+		topBorderStyle = topBorderStyle.Foreground(focusedBorderColor)
 	}
 
-	topBorderStyle := style.DefaultStyle.Foreground(borderColor)
 	title = titleStyle.Render(" " + title + " ")
-	border := lipgloss.RoundedBorder()
 	innerW := max(s.Width-2, 0)
 	titleW := lipgloss.Width(title)
 	remaining := max(innerW-titleW-1, 0)
@@ -44,7 +46,7 @@ func Panel(title string, s Size, body Viewable, focused bool) string {
 		title +
 		topBorderStyle.Render(strings.Repeat(border.Top, remaining)+border.TopRight)
 
-	box := style.DefaultStyle.
+	box := style.Default.
 		BorderForeground(borderColor).
 		BorderBackground(style.Bg0).
 		BorderStyle(border).

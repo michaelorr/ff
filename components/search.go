@@ -11,10 +11,10 @@ func NewSearchInput() textinput.Model {
 
 	// Styles.[Focused|Blurred|Cursor].[Text|Placeholder|Suggestion|Prompt]
 	s := textinput.DefaultDarkStyles()
-	s.Focused.Prompt = style.DefaultStyle.Foreground(style.BgBlue)
+	s.Focused.Prompt = style.Default.Foreground(style.BgBlue)
 	s.Blurred.Prompt = s.Focused.Prompt
-	s.Focused.Text = style.DefaultStyle
-	s.Blurred.Text = style.DefaultStyle
+	s.Focused.Text = style.Default
+	s.Blurred.Text = style.Default
 	s.Cursor.Color = style.Gray2
 	input.SetStyles(s)
 	input.Focus()

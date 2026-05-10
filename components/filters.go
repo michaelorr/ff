@@ -12,19 +12,30 @@ import (
 )
 
 func Filters(icons map[search.FileIcon]int, width int) string {
-	var b strings.Builder
-	b.WriteByte('\n')
 	types := slices.Collect(maps.Keys(icons))
 	slices.SortFunc(types, func(a, b search.FileIcon) int {
+		if icons[a] == icons[b] {
+			return strings.Compare(a.Icon, b.Icon)
+		}
 		return icons[b] - icons[a]
 	})
 
+	var b strings.Builder
+	b.WriteByte('\n')
 	for _, icon := range types {
-		iconStyle := style.DefaultStyle.Foreground(lipgloss.Color(icon.Color))
+		var partial string
+		var lineLen int
+		iconStyle := style.Default.Foreground(lipgloss.Color(icon.Color))
 
-		line := iconStyle.Render(icon.Icon) + style.DefaultStyle.Render(fmt.Sprintf(" %d", icons[icon]))
-		line = line + style.DefaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
-		b.WriteString(line + "\n")
+		partial = iconStyle.Render(icon.Icon + " ")
+		lineLen += lipgloss.Width(partial)
+		b.WriteString(partial)
+
+		partial = style.Default.Render(fmt.Sprintf("%d", icons[icon]))
+		lineLen += lipgloss.Width(partial)
+		b.WriteString(partial)
+		b.WriteString(style.Default.Render(strings.Repeat(" ", max(0, width-lineLen))))
+		b.WriteByte('\n')
 	}
 	return b.String()
 }

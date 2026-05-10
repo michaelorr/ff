@@ -14,7 +14,7 @@ import (
 var (
 	highlightCache = map[string]map[int]string{}
 
-	fileLineStyle = style.DefaultStyle.
+	fileLineStyle = style.Default.
 			Underline(true).
 			UnderlineSpaces(true).
 			UnderlineColor(style.Gray0).
@@ -26,28 +26,49 @@ var (
 	filenameStyle = fileLineStyle.
 			Bold(true)
 
-	lineNumStyle = style.DefaultStyle.
+	lineNumStyle = style.Default.
 			Foreground(style.Gray0)
 )
 
 func Matches(files []string, byFile map[string][]search.ContentMatch, width int) string {
 	var b strings.Builder
-
 	for _, path := range files {
-		b.WriteByte('\n')
+		var partial string
+		var lineLen int
 		icon := byFile[path][0].Icon
 		iconStyle := fileLineStyle.Foreground(lipgloss.Color(icon.Color))
-
 		dir, file := filepath.Split(path)
-		line := iconStyle.Render(icon.Icon) + fileDirStyle.Render("", dir) + filenameStyle.Render(file)
-		filler := fileLineStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
-		fmt.Fprintf(&b, "%s%s\n", line, filler)
 
+		b.WriteByte('\n')
+		partial = iconStyle.Render(icon.Icon + " ")
+		lineLen += lipgloss.Width(partial)
+		b.WriteString(partial)
+
+		partial = fileDirStyle.Render(dir)
+		lineLen += lipgloss.Width(partial)
+		b.WriteString(partial)
+
+		partial = filenameStyle.Render(file)
+		lineLen += lipgloss.Width(partial)
+		b.WriteString(partial)
+
+		b.WriteString(fileLineStyle.Render(strings.Repeat(" ", max(0, width-lineLen))))
+		b.WriteByte('\n')
+
+		lineLen = 0
 		for _, m := range byFile[path] {
-			line := lineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum)) +
-				cachedHighlight(m.Line, path, m.LineNum)
-			filler := style.DefaultStyle.Render(strings.Repeat(" ", max(0, width-lipgloss.Width(line))))
-			fmt.Fprint(&b, line, filler, "\n")
+			partial = lineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum))
+			lineLen += lipgloss.Width(partial)
+			b.WriteString(partial)
+
+			partial = cachedHighlight(m.Line, path, m.LineNum)
+			lineLen += lipgloss.Width(partial)
+			b.WriteString(partial)
+
+			b.WriteString(style.Default.Render(strings.Repeat(" ", max(0, width-lineLen))))
+			b.WriteByte('\n')
+
+			lineLen = 0
 		}
 	}
 
