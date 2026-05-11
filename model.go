@@ -3,9 +3,8 @@ package main
 import (
 	"time"
 
-	"charm.land/bubbles/v2/viewport"
-
 	"charm.land/bubbles/v2/textinput"
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/michaelorr/ff/components"
@@ -24,8 +23,8 @@ type model struct {
 	matchedFileNames []string
 	matchedFileIcons map[search.FileIcon]int
 	matchesByFile    map[string][]search.ContentMatch
-	selectedFile     string
-	selectedMatch    *search.ContentMatch
+	flatEntries      []components.MatchEntry
+	selectedMatchIdx int
 	filtersViewport  viewport.Model
 	matchesViewport  viewport.Model
 	previewViewport  viewport.Model
@@ -40,8 +39,7 @@ func newModel() model {
 		previewOpen:      true,
 		matchedFileIcons: make(map[search.FileIcon]int),
 		matchesByFile:    make(map[string][]search.ContentMatch),
-		selectedFile:     "",
-		selectedMatch:    nil,
+		selectedMatchIdx: -1,
 		filtersViewport:  viewport.New(),
 		matchesViewport:  viewport.New(),
 		previewViewport:  viewport.New(),

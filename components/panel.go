@@ -13,6 +13,7 @@ type Viewable interface {
 
 var (
 	titleStyle         = style.Default.Foreground(style.Accent).Bold(true)
+	subtitleStyle      = style.Default.Foreground(style.Fg0)
 	blurredBorderColor = style.Gray0
 	focusedBorderColor = style.Accent
 
@@ -28,7 +29,7 @@ type Size struct {
 //	╭─ title ───────────╮
 //	│  body...          │
 //	╰───────────────────╯
-func Panel(title string, s Size, body Viewable, focused bool) string {
+func Panel(title, subtitle string, s Size, body Viewable, focused bool) string {
 	borderColor := blurredBorderColor
 	topBorderStyle := style.Default.Foreground(blurredBorderColor)
 	if focused {
@@ -37,6 +38,9 @@ func Panel(title string, s Size, body Viewable, focused bool) string {
 	}
 
 	title = titleStyle.Render(" " + title + " ")
+	if subtitle != "" {
+		title += subtitleStyle.Render("• " + subtitle + " ")
+	}
 	innerW := max(s.Width-2, 0)
 	titleW := lipgloss.Width(title)
 	remaining := max(innerW-titleW-1, 0)

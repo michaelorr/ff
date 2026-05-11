@@ -1,6 +1,8 @@
 package main
 
 import (
+	"path/filepath"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/michaelorr/ff/components"
@@ -16,9 +18,11 @@ func (m model) View() tea.View {
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 
-	m.filtersViewport.SetContent(components.Filters(m.matchedFileIcons, m.componentSize("filters").Width))
-	m.matchesViewport.SetContent(components.Matches(m.matchedFileNames, m.matchesByFile, m.componentSize("matches").Width))
-	m.previewViewport.SetContent(components.Preview(m.selectedFile, m.selectedMatch, m.componentSize("preview").Width))
+	m.filtersViewport.SetContent(components.Filters(m.matchedFileIcons, m.filtersViewport.Width()))
+	m.matchesViewport.SetContent(components.Matches(m.matchedFileNames, m.matchesByFile, m.selectedEntry(), m.matchesViewport.Width()))
+	if m.previewOpen {
+		m.previewViewport.SetContent(components.Preview(m.selectedEntry(), m.previewViewport.Width(), m.previewViewport.Height()))
+	}
 
 	v.SetContent(
 		lipgloss.JoinVertical(
@@ -43,15 +47,15 @@ func (m *model) updateDimensions() {
 }
 
 func (m model) searchPanel() string {
-	return components.Panel("search", m.componentSize("search"), m.input, true)
+	return components.Panel("search", "", m.componentSize("search"), m.input, true)
 }
 
 func (m model) filterPanel() string {
-	return components.Panel("filters", m.componentSize("filters"), &m.filtersViewport, false)
+	return components.Panel("filters", "", m.componentSize("filters"), &m.filtersViewport, false)
 }
 
 func (m model) matchesPanel() string {
-	return components.Panel("matches", m.componentSize("matches"), &m.matchesViewport, false)
+	return components.Panel("matches", "", m.componentSize("matches"), &m.matchesViewport, false)
 }
 
 func (m model) previewPanel() string {
@@ -59,7 +63,12 @@ func (m model) previewPanel() string {
 		return ""
 	}
 
-	return components.Panel("preview", m.componentSize("preview"), &m.previewViewport, false)
+	var subtitle string
+	if e := m.selectedEntry(); e != nil {
+		subtitle = filepath.Base(e.Path)
+	}
+
+	return components.Panel("preview", subtitle, m.componentSize("preview"), &m.previewViewport, false)
 }
 
 func (m model) componentSize(component string) components.Size {

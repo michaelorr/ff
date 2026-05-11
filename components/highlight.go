@@ -1,6 +1,7 @@
 package components
 
 import (
+	"image/color"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -16,17 +17,18 @@ var (
 	base    = style.Default
 )
 
-// syntaxHighlight returns line with ANSI syntax-highlighting applied based on
+// syntaxHighlightWithBg returns line with ANSI syntax-highlighting applied based on
 // the language inferred from path. Returns line unchanged if no lexer matches.
-func syntaxHighlight(line, path string) string {
+func syntaxHighlightWithBg(line, path string, bg color.Color) string {
+	b := base.Background(bg)
 	lexer := lexers.Match(path)
 	if lexer == nil {
-		return base.Render(line)
+		return b.Render(line)
 	}
 
 	iter, err := chroma.Coalesce(lexer).Tokenise(nil, line)
 	if err != nil {
-		return base.Render(line)
+		return b.Render(line)
 	}
 
 	var sb strings.Builder
@@ -36,7 +38,7 @@ func syntaxHighlight(line, path string) string {
 			continue
 		}
 		entry := gruvbox.Get(tok.Type)
-		s := base
+		s := b
 		if entry.Colour.IsSet() {
 			s = s.Foreground(lipgloss.Color(entry.Colour.String()))
 		}
