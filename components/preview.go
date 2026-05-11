@@ -51,15 +51,20 @@ func Preview(entry *MatchEntry, width, height int) string {
 			partial = previewSelectedGutterStyle.Render("▸ ") + previewSelectedNumStyle.Render(fmt.Sprintf("%*d ", lineNumWidth, lineNum))
 			lineLen += lipgloss.Width(partial)
 			b.WriteString(partial)
+
+			partial = cachedHighlight(lines[i], entry.Path, lineNum, style.BgDimRed)
+			lineLen += lipgloss.Width(partial)
+			b.WriteString(partial)
 		} else {
 			partial = previewGutterStyle.Render("  ") + previewLineNumStyle.Render(fmt.Sprintf("%*d ", lineNumWidth, lineNum))
 			lineLen += lipgloss.Width(partial)
 			b.WriteString(partial)
+
+			partial = cachedHighlight(lines[i], entry.Path, lineNum, style.Bg0)
+			lineLen += lipgloss.Width(partial)
+			b.WriteString(partial)
 		}
 
-		partial = cachedHighlight(lines[i], entry.Path, lineNum, style.Bg0)
-		lineLen += lipgloss.Width(partial)
-		b.WriteString(partial)
 		b.WriteString(style.Default.Render(strings.Repeat(" ", max(0, width-lineLen))))
 
 		b.WriteByte('\n')
