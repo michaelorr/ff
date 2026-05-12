@@ -68,6 +68,7 @@ func handleNextFileKey(m *model) (model, tea.Cmd, bool) {
 			break
 		}
 	}
+	m.updateMatchesViewport()
 	return *m, nil, true
 }
 
@@ -81,6 +82,7 @@ func handlePrevFileKey(m *model) (model, tea.Cmd, bool) {
 			break
 		}
 	}
+	m.updateMatchesViewport()
 	return *m, nil, true
 }
 
@@ -88,6 +90,7 @@ func handleNextMatchKey(m *model) (model, tea.Cmd, bool) {
 	if len(m.flatEntries) != 0 && m.selectedMatchIdx < len(m.flatEntries)-1 {
 		m.selectedMatchIdx++
 	}
+	m.updateMatchesViewport()
 	return *m, nil, true
 }
 
@@ -95,5 +98,6 @@ func handlePrevMatchKey(m *model) (model, tea.Cmd, bool) {
 	if m.selectedMatchIdx > 0 {
 		m.selectedMatchIdx--
 	}
+	m.updateMatchesViewport()
 	return *m, nil, true
 }

@@ -48,4 +48,41 @@ func (m *model) resetMatches() {
 	m.matchesByFile = make(map[string][]search.ContentMatch)
 	m.flatEntries = nil
 	m.selectedMatchIdx = -1
+	m.matchesYOffset = 0
+}
+
+// lineForMatchIdx returns the 0-based line number in the matches viewport content
+// that corresponds to flatEntries[idx]. Each file entry occupies 2 lines (a blank
+// separator followed by the header), and each match entry occupies 1 line.
+func (m *model) lineForMatchIdx(idx int) int {
+	line := 0
+	for i, entry := range m.flatEntries {
+		if i == idx {
+			if entry.Match == nil {
+				// entry is a file, add 1 for the blank line between files
+				return line + 1
+			}
+			return line
+		}
+		if entry.Match == nil {
+			line += 2
+		} else {
+			line++
+		}
+	}
+	return line
+}
+
+const scrolloff = 3
+
+func (m *model) updateMatchesViewport() {
+	target := m.lineForMatchIdx(m.selectedMatchIdx)
+	height := m.matchesViewport.Height()
+	offset := m.matchesYOffset
+
+	if target < offset+scrolloff {
+		m.matchesYOffset = max(0, target-scrolloff)
+	} else if target >= offset+height-scrolloff {
+		m.matchesYOffset = target - height + scrolloff + 1
+	}
 }

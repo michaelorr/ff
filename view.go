@@ -20,6 +20,7 @@ func (m model) View() tea.View {
 
 	m.filtersViewport.SetContent(components.Filters(m.matchedFileIcons, m.filtersViewport.Width()))
 	m.matchesViewport.SetContent(components.Matches(m.matchedFileNames, m.matchesByFile, m.selectedEntry(), m.matchesViewport.Width()))
+	m.matchesViewport.SetYOffset(m.matchesYOffset)
 	if m.previewOpen {
 		m.previewViewport.SetContent(components.Preview(m.selectedEntry(), m.previewViewport.Width(), m.previewViewport.Height()))
 	}

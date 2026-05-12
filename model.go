@@ -25,6 +25,7 @@ type model struct {
 	matchesByFile    map[string][]search.ContentMatch
 	flatEntries      []components.MatchEntry
 	selectedMatchIdx int
+	matchesYOffset   int
 	filtersViewport  viewport.Model
 	matchesViewport  viewport.Model
 	previewViewport  viewport.Model
