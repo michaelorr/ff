@@ -47,10 +47,10 @@ func Matches(files []string, byFile map[string][]search.ContentMatch, selected *
 		myFilenameStyle := filenameStyle
 
 		if selected != nil && selected.Match == nil && selected.Path == path {
-			iconStyle = iconStyle.Background(selectedBg)
-			myFileLineStyle = myFileLineStyle.Background(selectedBg)
-			myFileDirStyle = myFileDirStyle.Background(selectedBg)
-			myFilenameStyle = myFilenameStyle.Background(selectedBg)
+			iconStyle = iconStyle.Background(selectedBg).UnderlineColor(style.Accent)
+			myFileLineStyle = myFileLineStyle.Background(selectedBg).UnderlineColor(style.Accent)
+			myFileDirStyle = myFileDirStyle.Background(selectedBg).UnderlineColor(style.Accent)
+			myFilenameStyle = myFilenameStyle.Background(selectedBg).UnderlineColor(style.Accent)
 		}
 
 		b.WriteByte('\n')
