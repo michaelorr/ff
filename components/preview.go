@@ -6,16 +6,17 @@ import (
 	"strconv"
 	"strings"
 
-	"charm.land/lipgloss/v2"
 	"github.com/michaelorr/ff/style"
 )
 
 var (
 	previewLineNumStyle     = style.Default.Foreground(style.Gray0)
-	previewSelectedNumStyle = style.Default.Foreground(style.Accent).Bold(true)
+	previewSelectedNumStyle = style.Default.Foreground(style.Accent).Bold(true).Background(style.BgDimRed)
 
 	previewGutterStyle         = style.Default.Foreground(style.Gray0)
 	previewSelectedGutterStyle = style.Default.Foreground(style.Accent)
+
+	previewSelectedLineStyle = style.Default.Background(style.BgDimRed)
 )
 
 func Preview(entry *MatchEntry, width, height int) string {
@@ -44,30 +45,27 @@ func Preview(entry *MatchEntry, width, height int) string {
 		lineNum := i + 1
 		isSelected := entry.Match != nil && lineNum == targetLine
 
-		var partial string
-		var lineLen int
-
+		myLineStyle := style.Default
+		myBg := style.Bg0
+		myGutterStyle := previewGutterStyle
+		gutterText := "  "
+		myLineNumStyle := previewLineNumStyle
 		if isSelected {
-			partial = previewSelectedGutterStyle.Render("▸ ") + previewSelectedNumStyle.Render(fmt.Sprintf("%*d ", lineNumWidth, lineNum))
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
-
-			partial = cachedHighlight(lines[i], entry.Path, lineNum, style.BgDimRed)
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
-		} else {
-			partial = previewGutterStyle.Render("  ") + previewLineNumStyle.Render(fmt.Sprintf("%*d ", lineNumWidth, lineNum))
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
-
-			partial = cachedHighlight(lines[i], entry.Path, lineNum, style.Bg0)
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
+			myLineStyle = previewSelectedLineStyle
+			myBg = style.BgDimRed
+			myGutterStyle = previewSelectedGutterStyle
+			gutterText = "▸ "
+			myLineNumStyle = previewSelectedNumStyle
 		}
 
-		b.WriteString(style.Default.Render(strings.Repeat(" ", max(0, width-lineLen))))
-
-		b.WriteByte('\n')
+		writeLine(
+			&b, width, myLineStyle,
+			[]styledString{
+				{Style: myGutterStyle, Text: gutterText},
+				{Style: myLineNumStyle, Text: fmt.Sprintf("%*d ", lineNumWidth, lineNum)},
+				{StyledText: cachedHighlight(lines[i], entry.Path, lineNum, myBg)},
+			},
+		)
 	}
 
 	return b.String()

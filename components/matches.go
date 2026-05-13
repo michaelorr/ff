@@ -33,69 +33,90 @@ var (
 	selectedBg    = style.BgDimRed
 )
 
-func Matches(files []string, byFile map[string][]search.ContentMatch, selected *MatchEntry, width int) string {
+func Matches(
+	files []string,
+	byFile map[string][]search.ContentMatch,
+	selected *MatchEntry,
+	width, startLine, numLines int,
+) string {
+	endLine := startLine + numLines
+	currentLine := 0
 	var b strings.Builder
+
 	for _, path := range files {
-		var partial string
-		var lineLen int
-		icon := byFile[path][0].Icon
-		dir, file := filepath.Split(path)
-
-		iconStyle := fileLineStyle.Foreground(lipgloss.Color(icon.Color))
-		myFileLineStyle := fileLineStyle
-		myFileDirStyle := fileDirStyle
-		myFilenameStyle := filenameStyle
-
-		if selected != nil && selected.Match == nil && selected.Path == path {
-			iconStyle = iconStyle.Background(selectedBg).UnderlineColor(style.Accent)
-			myFileLineStyle = myFileLineStyle.Background(selectedBg).UnderlineColor(style.Accent)
-			myFileDirStyle = myFileDirStyle.Background(selectedBg).UnderlineColor(style.Accent)
-			myFilenameStyle = myFilenameStyle.Background(selectedBg).UnderlineColor(style.Accent)
+		if currentLine >= endLine {
+			break
 		}
 
-		b.WriteByte('\n')
-		partial = iconStyle.Render(icon.Icon + " ")
-		lineLen += lipgloss.Width(partial)
-		b.WriteString(partial)
+		matches := byFile[path]
 
-		partial = myFileDirStyle.Render(dir)
-		lineLen += lipgloss.Width(partial)
-		b.WriteString(partial)
+		// skip to the first file that will actually draw something
+		fileEnd := currentLine + 2 + len(matches)
+		if fileEnd <= startLine {
+			currentLine = fileEnd
+			continue
+		}
 
-		partial = myFilenameStyle.Render(file)
-		lineLen += lipgloss.Width(partial)
-		b.WriteString(partial)
-
-		b.WriteString(myFileLineStyle.Render(strings.Repeat(" ", max(0, width-lineLen))))
-		b.WriteByte('\n')
-
-		lineLen = 0
-		for _, m := range byFile[path] {
-			padStyle := style.Default
-			myLineNumStyle := lineNumStyle
-
-			isSelectedMatch := selected != nil && selected.Match != nil && selected.Path == path && selected.Match.LineNum == m.LineNum
-			if isSelectedMatch {
-				padStyle = padStyle.Background(selectedBg)
-				myLineNumStyle = myLineNumStyle.Background(selectedBg).Foreground(style.Accent).Bold(true)
-			}
-
-			partial = myLineNumStyle.Render(fmt.Sprintf("%5d ", m.LineNum))
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
-
-			if isSelectedMatch {
-				partial = cachedHighlight(m.Line, path, m.LineNum, selectedBg)
-			} else {
-				partial = cachedHighlight(m.Line, path, m.LineNum, style.Bg0)
-			}
-			lineLen += lipgloss.Width(partial)
-			b.WriteString(partial)
-
-			b.WriteString(padStyle.Render(strings.Repeat(" ", max(0, width-lineLen))))
+		// blank separator line
+		if currentLine >= startLine {
 			b.WriteByte('\n')
+		}
+		currentLine++
 
-			lineLen = 0
+		// file header line
+		if currentLine >= startLine && currentLine < endLine {
+			icon := matches[0].Icon
+			dir, file := filepath.Split(path)
+			iconStyle := fileLineStyle.Foreground(lipgloss.Color(icon.Color))
+			myFileLineStyle := fileLineStyle
+			myFileDirStyle := fileDirStyle
+			myFilenameStyle := filenameStyle
+			if selected != nil && selected.Match == nil && selected.Path == path {
+				iconStyle = iconStyle.Background(selectedBg).UnderlineColor(style.Accent)
+				myFileLineStyle = myFileLineStyle.Background(selectedBg).UnderlineColor(style.Accent)
+				myFileDirStyle = myFileDirStyle.Background(selectedBg).UnderlineColor(style.Accent)
+				myFilenameStyle = myFilenameStyle.Background(selectedBg).UnderlineColor(style.Accent)
+			}
+
+			writeLine(
+				&b, width,
+				myFileLineStyle,
+				[]styledString{
+					{Style: iconStyle, Text: icon.Icon + " "},
+					{Style: myFileDirStyle, Text: dir},
+					{Style: myFilenameStyle, Text: file},
+				},
+			)
+		}
+		currentLine++
+
+		// match lines
+		for _, m := range matches {
+			if currentLine >= endLine {
+				break
+			}
+			if currentLine >= startLine {
+				padStyle := style.Default
+				myLineNumStyle := lineNumStyle
+				myBg := style.Bg0
+
+				isSelectedMatch := selected != nil && selected.Match != nil && selected.Path == path && selected.Match.LineNum == m.LineNum
+				if isSelectedMatch {
+					padStyle = padStyle.Background(selectedBg)
+					myLineNumStyle = myLineNumStyle.Background(selectedBg).Foreground(style.Accent).Bold(true)
+					myBg = selectedBg
+				}
+
+				writeLine(
+					&b, width,
+					padStyle,
+					[]styledString{
+						{Style: myLineNumStyle, Text: fmt.Sprintf("%5d ", m.LineNum)},
+						{StyledText: cachedHighlight(m.Line, path, m.LineNum, myBg)},
+					},
+				)
+			}
+			currentLine++
 		}
 	}
 
