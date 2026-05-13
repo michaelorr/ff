@@ -21,22 +21,14 @@ type MatchEntry struct {
 var (
 	highlightCache = map[color.Color]map[string]map[int]string{}
 
-	fileLineStyle = style.Default.
-			Underline(true).
-			UnderlineSpaces(true).
-			UnderlineColor(style.Gray0).
-			UnderlineStyle(lipgloss.UnderlineDashed)
-
-	fileDirStyle  = fileLineStyle.Foreground(style.Gray0)
-	filenameStyle = fileLineStyle.Bold(true)
-	lineNumStyle  = style.Default.Foreground(style.Gray0)
-	selectedBg    = style.BgDimRed
+	lineNumStyle = style.Default.Foreground(style.Gray0)
+	selectedBg   = style.BgDimRed
 )
 
 func Matches(
 	files []string,
 	byFile map[string][]search.ContentMatch,
-	selected *MatchEntry,
+	selectedEntry *MatchEntry,
 	width, startLine, numLines int,
 ) string {
 	endLine := startLine + numLines
@@ -65,26 +57,17 @@ func Matches(
 
 		// file header line
 		if currentLine >= startLine && currentLine < endLine {
+			currentFileSelected := isSelectedFile(selectedEntry, path)
+
 			icon := matches[0].Icon
 			dir, file := filepath.Split(path)
-			iconStyle := fileLineStyle.Foreground(lipgloss.Color(icon.Color))
-			myFileLineStyle := fileLineStyle
-			myFileDirStyle := fileDirStyle
-			myFilenameStyle := filenameStyle
-			if selected != nil && selected.Match == nil && selected.Path == path {
-				iconStyle = iconStyle.Background(selectedBg).UnderlineColor(style.Accent)
-				myFileLineStyle = myFileLineStyle.Background(selectedBg).UnderlineColor(style.Accent)
-				myFileDirStyle = myFileDirStyle.Background(selectedBg).UnderlineColor(style.Accent)
-				myFilenameStyle = myFilenameStyle.Background(selectedBg).UnderlineColor(style.Accent)
-			}
-
 			writeLine(
 				&b, width,
-				myFileLineStyle,
+				fileLineStyles(currentFileSelected),
 				[]styledString{
-					{Style: iconStyle, Text: icon.Icon + " "},
-					{Style: myFileDirStyle, Text: dir},
-					{Style: myFilenameStyle, Text: file},
+					{Style: iconStyles(icon.Color, currentFileSelected), Text: icon.Icon + " "},
+					{Style: fileDirStyles(currentFileSelected), Text: dir},
+					{Style: fileNameStyles(currentFileSelected), Text: file},
 				},
 			)
 		}
@@ -96,23 +79,13 @@ func Matches(
 				break
 			}
 			if currentLine >= startLine {
-				padStyle := style.Default
-				myLineNumStyle := lineNumStyle
-				myBg := style.Bg0
-
-				isSelectedMatch := selected != nil && selected.Match != nil && selected.Path == path && selected.Match.LineNum == m.LineNum
-				if isSelectedMatch {
-					padStyle = padStyle.Background(selectedBg)
-					myLineNumStyle = myLineNumStyle.Background(selectedBg).Foreground(style.Accent).Bold(true)
-					myBg = selectedBg
-				}
-
+				currentMatchSelected := isSelectedMatch(selectedEntry, path, m.LineNum)
 				writeLine(
 					&b, width,
-					padStyle,
+					whitespaceStyle(currentMatchSelected),
 					[]styledString{
-						{Style: myLineNumStyle, Text: fmt.Sprintf("%5d ", m.LineNum)},
-						{StyledText: cachedHighlight(m.Line, path, m.LineNum, myBg)},
+						{Style: lineNumStyles(currentMatchSelected), Text: fmt.Sprintf("%5d ", m.LineNum)},
+						{StyledText: cachedHighlight(m.Line, path, m.LineNum, syntaxBgColors(currentMatchSelected))},
 					},
 				)
 			}
@@ -121,6 +94,65 @@ func Matches(
 	}
 
 	return b.String()
+}
+
+func lineNumStyles(selected bool) lipgloss.Style {
+	if selected {
+		return lineNumStyle.Background(selectedBg).Foreground(style.Accent).Bold(true)
+	}
+	return lineNumStyle
+}
+
+func syntaxBgColors(selected bool) color.Color {
+	if selected {
+		return selectedBg
+	}
+	return style.Bg0
+}
+
+func iconStyles(color string, selected bool) lipgloss.Style {
+	return fileLineStyles(selected).Foreground(lipgloss.Color(color))
+}
+
+func isSelectedFile(selectedEntry *MatchEntry, path string) bool {
+	return selectedEntry != nil && selectedEntry.Match == nil && selectedEntry.Path == path
+}
+
+func isSelectedMatch(selectedEntry *MatchEntry, path string, lineNum int) bool {
+	return selectedEntry != nil && selectedEntry.Match != nil && selectedEntry.Path == path && selectedEntry.Match.LineNum == lineNum
+}
+
+func fileDirStyles(selected bool) lipgloss.Style {
+	fg := style.Gray0
+	if selected {
+		fg = style.Fg0
+	}
+	return fileLineStyles(selected).Foreground(fg)
+}
+
+func fileNameStyles(selected bool) lipgloss.Style {
+	return fileLineStyles(selected).Bold(true).Foreground(style.Accent)
+}
+
+func fileLineStyles(selected bool) lipgloss.Style {
+	fileLineStyle := style.Default.
+		Underline(true).
+		UnderlineSpaces(true).
+		UnderlineColor(style.Gray0).
+		UnderlineStyle(lipgloss.UnderlineDashed)
+
+	if selected {
+		return fileLineStyle.Background(selectedBg).UnderlineColor(style.Accent)
+	}
+
+	return fileLineStyle
+}
+
+func whitespaceStyle(selected bool) lipgloss.Style {
+	if selected {
+		return style.Default.Background(selectedBg)
+	}
+	return style.Default
 }
 
 func cachedHighlight(line, path string, lineNum int, bg color.Color) string {

@@ -6,17 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"charm.land/lipgloss/v2"
 	"github.com/michaelorr/ff/style"
-)
-
-var (
-	previewLineNumStyle     = style.Default.Foreground(style.Gray0)
-	previewSelectedNumStyle = style.Default.Foreground(style.Accent).Bold(true).Background(style.BgDimRed)
-
-	previewGutterStyle         = style.Default.Foreground(style.Gray0)
-	previewSelectedGutterStyle = style.Default.Foreground(style.Accent)
-
-	previewSelectedLineStyle = style.Default.Background(style.BgDimRed)
 )
 
 func Preview(entry *MatchEntry, width, height int) string {
@@ -43,32 +34,46 @@ func Preview(entry *MatchEntry, width, height int) string {
 	var b strings.Builder
 	for i := start; i < end; i++ {
 		lineNum := i + 1
-		isSelected := entry.Match != nil && lineNum == targetLine
 
-		myLineStyle := style.Default
-		myBg := style.Bg0
-		myGutterStyle := previewGutterStyle
-		gutterText := "  "
-		myLineNumStyle := previewLineNumStyle
-		if isSelected {
-			myLineStyle = previewSelectedLineStyle
-			myBg = style.BgDimRed
-			myGutterStyle = previewSelectedGutterStyle
-			gutterText = "▸ "
-			myLineNumStyle = previewSelectedNumStyle
-		}
-
+		previewLineHighlighted := isHighlighted(lineNum, targetLine, entry)
 		writeLine(
-			&b, width, myLineStyle,
+			&b, width, previewDefault(previewLineHighlighted),
 			[]styledString{
-				{Style: myGutterStyle, Text: gutterText},
-				{Style: myLineNumStyle, Text: fmt.Sprintf("%*d ", lineNumWidth, lineNum)},
-				{StyledText: cachedHighlight(lines[i], entry.Path, lineNum, myBg)},
+				{Style: gutterStyles(previewLineHighlighted), Text: gutterText(previewLineHighlighted)},
+				{Style: previewLineNumStyles(previewLineHighlighted), Text: fmt.Sprintf("%*d ", lineNumWidth, lineNum)},
+				{StyledText: cachedHighlight(lines[i], entry.Path, lineNum, syntaxBgColors(previewLineHighlighted))},
 			},
 		)
 	}
 
 	return b.String()
+}
+
+func isHighlighted(lineNum, targetLine int, entry *MatchEntry) bool {
+	return entry.Match != nil && lineNum == targetLine
+}
+
+func previewDefault(isSelected bool) lipgloss.Style {
+	myStyle := style.Default.Foreground(style.Gray0)
+	if isSelected {
+		myStyle = myStyle.Background(style.BgDimRed).Foreground(style.Accent)
+	}
+	return myStyle
+}
+
+func previewLineNumStyles(isSelected bool) lipgloss.Style {
+	return previewDefault(isSelected).Bold(isSelected)
+}
+
+func gutterStyles(isSelected bool) lipgloss.Style {
+	return previewDefault(isSelected)
+}
+
+func gutterText(isSelected bool) string {
+	if isSelected {
+		return "▸ "
+	}
+	return "  "
 }
 
 // visibleWindow computes the [start, end) line indices (0-based) to display,
